@@ -12,6 +12,7 @@ from sources.core.storage.storage_factory import StorageFactory
 
 class Encryption:
     POINT_SIZE = 66
+    AES_SIZE = 32
     storage: Storage
 
     def __init__(self):
@@ -72,8 +73,8 @@ class Encryption:
         )
 
         derived_key = hkdf.derive(shared_secret)
-        aes_key = derived_key[:32]
-        iv = derived_key[-32:]
+        aes_key = derived_key[:Encryption.AES_SIZE]
+        iv = derived_key[-Encryption.AES_SIZE:]
         return aes_key, iv
 
     @classmethod
