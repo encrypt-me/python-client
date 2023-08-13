@@ -14,7 +14,7 @@ $ ./encrypt-me --help
 ## Usage
 To encrypt a message with an user "support@encrypt-me.org" public key 
 ```
-encrypt-me -e support@encrypt-me.org --message "Hello World"
+$ encrypt-me -e support@encrypt-me.org --message "Hello World"
 ```
 
 It will provide the output
