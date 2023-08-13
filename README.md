@@ -5,7 +5,10 @@
 ### MacOS
 You can use bash script from this repo
 ```
+$ git clone https://github.com/encrypt-me/python-client.git
+$ cd python-client
 $ chmod +x encrypt-me
+$ ./encrypt-me --help
 ```
 
 ## Usage
