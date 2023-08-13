@@ -121,3 +121,12 @@ class Encryption:
 
         cipher = AESGCM(aes_key)
         return cipher.decrypt(iv, encrypted, None)
+
+    def get_public_key_in_pem_format(self):
+        public_key = self.get_public_key()
+        public_key_bytes = public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+
+        return public_key_bytes.decode('utf-8')

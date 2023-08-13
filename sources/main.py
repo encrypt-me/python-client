@@ -3,6 +3,7 @@ import argparse
 from sources.core.encryption import Encryption
 from sources.core.email import Email
 from sources.constants.exit_codes import ExitCodes
+from sources.core.server import Server
 
 
 def main():
@@ -36,8 +37,22 @@ def register_new_email(address):
         print("Invalid e-mail format.")
         exit(ExitCodes.INVALID_EMAIL)
 
-    # TODO: implement actual registration
-    print("Registration is in progress... and incomplete.")
+    encryption = Encryption()
+
+    # TODO: it should generate keys if they are not present
+
+    print("Registration...")
+    if not Server.register(email.email, encryption.get_public_key_in_pem_format()):
+        print("Registration failed.")
+        exit(ExitCodes.REGISTRATION_FAILED)
+
+    print('Provide a validation code:')
+    validation_code = input()
+    if not Server.validate(email.email, validation_code):
+        print("Validation failed.")
+        exit(ExitCodes.VALIDATION_FAILED)
+
+    print("Registration successful.")
 
 
 def encrypt_data(email):

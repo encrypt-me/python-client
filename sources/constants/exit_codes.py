@@ -1,4 +1,6 @@
 class ExitCodes:
     GOOD = 0
     INVALID_EMAIL = 1
+    REGISTRATION_FAILED = 10
+    VALIDATION_FAILED = 11
     UNKNOWN_ERROR = 100
