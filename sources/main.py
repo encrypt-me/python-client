@@ -23,10 +23,14 @@ def main():
                         help="Input message to encrypt")
     parser.add_argument("-ec", "--encrypt-with-custom-key", action='store_true',
                         help="Encrypts input data using a custom public key")
+    parser.add_argument("-gpk", "--generate-random-public-key", action='store_true',
+                        help="It generates random public key and prints it to the console")
 
     args = parser.parse_args()
 
     try:
+        if args.generate_random_public_key:
+            generate_random_public_key()
         if args.register:
             register_new_email(args.register[0])
         elif args.encrypt:
@@ -109,3 +113,8 @@ def decrypt_message():
     print("-----BEGIN DECRYPTED MESSAGE-----")
     print(message)
     print("-----END DECRYPTED MESSAGE-----")
+
+
+def generate_random_public_key():
+    cryptography = Encryption()
+    print(cryptography.generate_random_public_key_pem())

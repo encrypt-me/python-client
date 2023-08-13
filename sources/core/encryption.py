@@ -133,9 +133,17 @@ class Encryption:
 
     def get_public_key_in_pem_format(self):
         public_key = self.get_public_key()
+        return self.internal_get_public_key_in_pem_format(public_key)
+
+    @classmethod
+    def internal_get_public_key_in_pem_format(cls, public_key):
         public_key_bytes = public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
-
         return public_key_bytes.decode('utf-8')
+
+    @classmethod
+    def generate_random_public_key_pem(cls):
+        private_key = ec.generate_private_key(ec.SECP521R1(), default_backend())
+        return cls.internal_get_public_key_in_pem_format(private_key.public_key())
