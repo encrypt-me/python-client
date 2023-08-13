@@ -5,6 +5,9 @@ class Formatter:
     HEADER = '-----ENCRYPTED WITH ENCRYPT-ME.ORG-----'
     LINE_LENGTH = 64
 
+    PUBLIC_KEY_HEADER = '-----BEGIN PUBLIC KEY-----'
+    PUBLIC_KEY_FOOTER = '-----END PUBLIC KEY-----'
+
     @staticmethod
     def to_base64(data: bytes):
         base64_data = base64.b64encode(data)

@@ -22,3 +22,21 @@ class InputReader:
                 message += line
 
         return base64.b64decode(message)
+
+    @staticmethod
+    def read_public_key():
+        can_read = False
+        message = ''
+        while True:
+            line = input()
+
+            if line == Formatter.PUBLIC_KEY_HEADER:
+                can_read = True
+
+            if can_read:
+                message += line + '\n'
+
+            if line == Formatter.PUBLIC_KEY_FOOTER:
+                break
+
+        return message

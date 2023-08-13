@@ -21,6 +21,8 @@ def main():
                         help="Decrypts input message")
     parser.add_argument("-m", "--message", nargs=1, metavar="<message>",
                         help="Input message to encrypt")
+    parser.add_argument("-ec", "--encrypt-with-custom-key", action='store_true',
+                        help="Encrypts input data using a custom public key")
 
     args = parser.parse_args()
 
@@ -31,11 +33,16 @@ def main():
             if not args.message:
                 print('Provide a message to encrypt with -m or --message option.')
                 exit(ExitCodes.NO_MESSAGE_TO_ENCRYPT)
-            encrypt_data(args.encrypt[0], args.message[0])
+            encrypt_data_with_email(args.encrypt[0], args.message[0])
         elif args.generate_keys:
             generate_new_keys()
         elif args.decrypt:
             decrypt_data()
+        elif args.encrypt_with_custom_key:
+            if not args.message:
+                print('Provide a message to encrypt with -m or --message option.')
+                exit(ExitCodes.NO_MESSAGE_TO_ENCRYPT)
+            encrypt_data_with_custom_key(args.message[0])
     except Exception as e:
         print('Unknown error: ' + str(e) + '.')
         exit(ExitCodes.UNKNOWN_ERROR)
@@ -66,13 +73,21 @@ def register_new_email(address):
     print("Registration successful.")
 
 
-def encrypt_data(email, message):
-    public_key = Server.get_public_key(email)
-
+def encrypt_data(public_key, message):
     cryptography = Encryption()
     encrypted_bytes = cryptography.encrypt_with_public_pem_key(public_key, message.encode('utf-8'))
 
     print(Formatter.to_base64(encrypted_bytes))
+
+
+def encrypt_data_with_email(email, message):
+    public_key = Server.get_public_key(email)
+    encrypt_data(public_key, message)
+
+
+def encrypt_data_with_custom_key(message):
+    public_key = InputReader.read_public_key()
+    encrypt_data(public_key, message)
 
 
 def generate_new_keys():
