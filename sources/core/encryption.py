@@ -78,6 +78,15 @@ class Encryption:
         return aes_key, iv
 
     @classmethod
+    def encrypt_with_public_pem_key(cls, public_pem_key, data: bytes):
+        public_key_bytes = public_pem_key.encode('utf-8')
+        public_key = serialization.load_pem_public_key(
+            public_key_bytes,
+            backend=default_backend()
+        )
+        return Encryption.encrypt_with_public_key(public_key, data)
+
+    @classmethod
     def encrypt_with_public_key(cls, public_key, data: bytes):
         # TODO: validate with kSecKeyAlgorithmECIESEncryptionStandardVariableIVX963SHA512AESGCM
         encryption_key = ec.generate_private_key(ec.SECP521R1())

@@ -28,3 +28,13 @@ class Server:
         response = requests.post(ServerUrls.VALIDATION_URL, headers=Server.get_headers(), data=json.dumps(data))
 
         return response.status_code == 200
+
+    @staticmethod
+    def get_public_key(email):
+        data = {
+            'email': email
+        }
+        response = requests.post(ServerUrls.GET_PUBLIC_KEY_URL, headers=Server.get_headers(), data=json.dumps(data))
+
+        if response.status_code == 200:
+            return response.json()['public_key']
