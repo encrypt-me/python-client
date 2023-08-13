@@ -1,0 +1,11 @@
+#!/bin/bash
+
+PYTHON=python3
+ENCRYPT_ME=./encrypt-me.py
+
+if ! $PYTHON -c "import cryptography" &> /dev/null; then
+    echo "cryptography not found, installing..."
+    pip3 install cryptography
+fi
+
+$PYTHON $ENCRYPT_ME "$@"
