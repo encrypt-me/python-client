@@ -4,6 +4,7 @@ from sources.core.encryption import Encryption
 from sources.core.email import Email
 from sources.constants.exit_codes import ExitCodes
 from sources.core.formatter import Formatter
+from sources.core.input_reader import InputReader
 from sources.core.server import Server
 
 
@@ -81,15 +82,8 @@ def generate_new_keys():
 
 
 def decrypt_data():
-    print("Enter message to decrypt (it should end with a new line):")
+    print("Enter message to decrypt:")
 
-    encrypted_message = ''
-    while True:
-        line = input()
-        if line == '':
-            break
-        encrypted_message += line + "\n"
-
-    encryption = Encryption()
-    message = encryption.decrypt(Formatter.from_base64(encrypted_message))
+    encrypted_bytes = InputReader.read_encrypted_base64_text()
+    message = Encryption().decrypt(encrypted_bytes)
     print(message)
