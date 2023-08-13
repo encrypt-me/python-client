@@ -65,7 +65,9 @@ def register_new_email(address):
         exit(ExitCodes.REGISTRATION_FAILED)
 
     print('Provide a validation code:')
-    validation_code = input()
+    validation_code_encrypted = InputReader.read_encrypted_base64_text()
+    validation_code_bytes = encryption.decrypt(validation_code_encrypted)
+    validation_code = validation_code_bytes.decode('utf-8')
     if not Server.validate(email.email, validation_code):
         print("Validation failed.")
         exit(ExitCodes.VALIDATION_FAILED)
