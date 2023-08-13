@@ -37,7 +37,7 @@ def main():
         elif args.generate_keys:
             generate_new_keys()
         elif args.decrypt:
-            decrypt_data()
+            decrypt_message()
         elif args.encrypt_with_custom_key:
             if not args.message:
                 print('Provide a message to encrypt with -m or --message option.')
@@ -98,9 +98,14 @@ def generate_new_keys():
     print("Keys generated.")
 
 
-def decrypt_data():
-    print("Enter message to decrypt:")
+def decrypt_message():
+    print("Enter encrypted data:")
 
     encrypted_bytes = InputReader.read_encrypted_base64_text()
-    message = Encryption().decrypt(encrypted_bytes)
+    message_bytes = Encryption().decrypt(encrypted_bytes)
+    message = message_bytes.decode('utf-8')
+
+    print("\n")
+    print("-----BEGIN DECRYPTED MESSAGE-----")
     print(message)
+    print("-----END DECRYPTED MESSAGE-----")
