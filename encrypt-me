@@ -3,9 +3,14 @@
 PYTHON=python3
 ENCRYPT_ME=./encrypt-me.py
 
-if ! $PYTHON -c "import cryptography" &> /dev/null; then
-    echo "cryptography not found, installing..."
-    pip3 install cryptography
-fi
+function check_package {
+    if ! $PYTHON -c "import $1" &> /dev/null; then
+        echo "$1 not found, installing..."
+        pip3 install "$1"
+    fi
+}
+
+check_package cryptography
+check_package requests
 
 $PYTHON $ENCRYPT_ME "$@"
