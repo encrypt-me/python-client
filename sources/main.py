@@ -10,17 +10,21 @@ from sources.core.server import Server
 
 def main():
     parser = argparse.ArgumentParser(description='Encrypts a file or text using a public key')
-    parser.add_argument("-v", "--version", action='version', version="%(prog)s 1.0")
-    parser.add_argument("-r", "--register", type=str, nargs=1, metavar="<e-mail>",
-                        help="Register a new public key with a given email address")
+
     parser.add_argument("-e", "--encrypt", type=str, nargs=1, metavar="<e-mail>",
                         help="Encrypts input data using a public key associated with a given email address")
-    parser.add_argument("-g", "--generate-keys", action='store_true',
-                        help="Generate new private and public keys")
     parser.add_argument("-d", "--decrypt", action='store_true',
                         help="Decrypts input message")
     parser.add_argument("-m", "--message", nargs=1, metavar="<message>",
                         help="Input message to encrypt")
+
+    parser.add_argument("-r", "--register", type=str, nargs=1, metavar="<e-mail>",
+                        help="Register a new public key with a given email address")
+    parser.add_argument("-g", "--generate-keys", action='store_true',
+                        help="Generate new private and public keys")
+
+    parser.add_argument("-v", "--version", action='version', version="%(prog)s 1.0")
+    
     parser.add_argument("-ec", "--encrypt-with-custom-key", action='store_true',
                         help="Encrypts input data using a custom public key")
     parser.add_argument("-gpk", "--generate-random-public-key", action='store_true',
