@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
+from sources.core.formatter import Formatter
 from sources.core.storage.storage import Storage
 from sources.core.storage.storage_factory import StorageFactory
 
@@ -79,7 +80,7 @@ class Encryption:
 
     @classmethod
     def encrypt_with_public_pem_key(cls, public_pem_key, data: bytes):
-        public_key_bytes = public_pem_key.encode('utf-8')
+        public_key_bytes = public_pem_key.encode(Formatter.DEFAULT_ENCODING)
         public_key = serialization.load_pem_public_key(
             public_key_bytes,
             backend=default_backend()
@@ -141,7 +142,7 @@ class Encryption:
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
-        return public_key_bytes.decode('utf-8')
+        return public_key_bytes.decode(Formatter.DEFAULT_ENCODING)
 
     @classmethod
     def generate_random_public_key_pem(cls):

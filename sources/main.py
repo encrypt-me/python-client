@@ -24,7 +24,7 @@ def main():
                         help="Generate new private and public keys")
 
     parser.add_argument("-v", "--version", action='version', version="%(prog)s 1.0")
-    
+
     parser.add_argument("-ec", "--encrypt-with-custom-key", action='store_true',
                         help="Encrypts input data using a custom public key")
     parser.add_argument("-gpk", "--generate-random-public-key", action='store_true',
@@ -75,7 +75,7 @@ def register_new_email(address):
     print('Provide a validation code:')
     validation_code_encrypted = InputReader.read_encrypted_base64_text()
     validation_code_bytes = encryption.decrypt(validation_code_encrypted)
-    validation_code = validation_code_bytes.decode('utf-8')
+    validation_code = validation_code_bytes.decode(Formatter.DEFAULT_ENCODING)
     if not Server.validate(email.email, validation_code):
         print("Validation failed.")
         exit(ExitCodes.VALIDATION_FAILED)
@@ -85,7 +85,7 @@ def register_new_email(address):
 
 def encrypt_data(public_key, message):
     cryptography = Encryption()
-    encrypted_bytes = cryptography.encrypt_with_public_pem_key(public_key, message.encode('utf-8'))
+    encrypted_bytes = cryptography.encrypt_with_public_pem_key(public_key, message.encode(Formatter.DEFAULT_ENCODING))
 
     print(Formatter.to_base64(encrypted_bytes))
 
@@ -111,7 +111,7 @@ def decrypt_message():
 
     encrypted_bytes = InputReader.read_encrypted_base64_text()
     message_bytes = Encryption().decrypt(encrypted_bytes)
-    message = message_bytes.decode('utf-8')
+    message = message_bytes.decode(Formatter.DEFAULT_ENCODING)
 
     print("\n")
     print("-----BEGIN DECRYPTED MESSAGE-----")

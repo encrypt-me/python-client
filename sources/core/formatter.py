@@ -8,6 +8,8 @@ class Formatter:
     PUBLIC_KEY_HEADER = '-----BEGIN PUBLIC KEY-----'
     PUBLIC_KEY_FOOTER = '-----END PUBLIC KEY-----'
 
+    DEFAULT_ENCODING = 'utf-8'
+
     @staticmethod
     def to_base64(data: bytes):
         base64_data = base64.b64encode(data)
