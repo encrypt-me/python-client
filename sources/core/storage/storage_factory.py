@@ -1,6 +1,7 @@
 import os
 
 from sources.core.storage.unix_storage import UnixStorage
+from sources.core.storage.windows_storage import WindowsStorage
 
 
 class StorageFactory:
@@ -8,6 +9,6 @@ class StorageFactory:
     def create():
         # if windows
         if os.name == 'nt':
-            raise NotImplementedError("Windows is not supported yet.")
+            return WindowsStorage()
         else:
             return UnixStorage()
