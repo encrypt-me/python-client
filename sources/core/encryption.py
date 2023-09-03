@@ -1,3 +1,4 @@
+import hashlib
 import os
 
 from cryptography.hazmat.backends import default_backend
@@ -14,6 +15,7 @@ from sources.core.storage.storage_factory import StorageFactory
 class Encryption:
     POINT_SIZE = 66
     AES_SIZE = 32
+    IV_SIZE = 16
     storage: Storage
 
     def __init__(self):
@@ -65,17 +67,14 @@ class Encryption:
         print(self.decrypt(data))
 
     @classmethod
-    def extract_aes_keys(cls, shared_secret):
-        hkdf = HKDF(
-            algorithm=hashes.SHA512(),
-            length=64,
-            salt=None,
-            info=b'',
-        )
+    def extract_aes_keys(cls, shared_secret, header):
+        all_bytes = shared_secret + bytes([0, 0, 0, 1]) + header
+        hash_object = hashlib.sha512()
+        hash_object.update(all_bytes)
+        derived_key = hash_object.digest()
 
-        derived_key = hkdf.derive(shared_secret)
         aes_key = derived_key[:Encryption.AES_SIZE]
-        iv = derived_key[-Encryption.AES_SIZE:]
+        iv = derived_key[Encryption.AES_SIZE:][:Encryption.IV_SIZE]
         return aes_key, iv
 
     @classmethod
@@ -89,32 +88,30 @@ class Encryption:
 
     @classmethod
     def encrypt_with_public_key(cls, public_key, data: bytes):
-        # TODO: validate with kSecKeyAlgorithmECIESEncryptionStandardVariableIVX963SHA512AESGCM
         encryption_key = ec.generate_private_key(ec.SECP521R1())
 
         shared_secret = encryption_key.exchange(ec.ECDH(), public_key)
-        aes_key, iv = Encryption.extract_aes_keys(shared_secret)
+
+        encryption_public_key = encryption_key.public_key()
+        x_bytes = encryption_public_key.public_numbers().x.to_bytes(Encryption.POINT_SIZE, 'big')
+        y_bytes = encryption_public_key.public_numbers().y.to_bytes(Encryption.POINT_SIZE, 'big')
+
+        # add uncompressed point prefix
+        header = b'\x04' + x_bytes + y_bytes
+        aes_key, iv = Encryption.extract_aes_keys(shared_secret, header)
 
         # Encrypt the data using AES-256 in GCM mode
         cipher = AESGCM(aes_key)
 
         encrypted = cipher.encrypt(iv, data, None)
-
-        public_key = encryption_key.public_key()
-        x_bytes = public_key.public_numbers().x.to_bytes(Encryption.POINT_SIZE, 'big')
-        y_bytes = public_key.public_numbers().y.to_bytes(Encryption.POINT_SIZE, 'big')
-
-        # add uncompressed point prefix
-        header = b'\x04' + x_bytes + y_bytes
-
         return header + encrypted
 
     @classmethod
     def decrypt_with_private_key(cls, private_key, data: bytes):
-        # TODO: validate with kSecKeyAlgorithmECIESEncryptionStandardVariableIVX963SHA512AESGCM
         shift = (Encryption.POINT_SIZE * 2) + 1
 
-        encryption_key_data = data[:shift][1:]
+        header = data[:shift]
+        encryption_key_data = header[1:]
         encryption_key_x = encryption_key_data[:Encryption.POINT_SIZE]
         encryption_key_y = encryption_key_data[Encryption.POINT_SIZE:]
 
@@ -127,7 +124,8 @@ class Encryption:
         encrypted = bytes(data[shift:])
 
         shared_secret = private_key.exchange(ec.ECDH(), encryption_key)
-        aes_key, iv = Encryption.extract_aes_keys(shared_secret)
+
+        aes_key, iv = Encryption.extract_aes_keys(shared_secret, header)
 
         cipher = AESGCM(aes_key)
         return cipher.decrypt(iv, encrypted, None)
