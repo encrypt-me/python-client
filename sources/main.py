@@ -1,11 +1,11 @@
 import argparse
 
-from sources.core.encryption import Encryption
-from sources.core.email import Email
 from sources.constants.exit_codes import ExitCodes
+from sources.core.encrypt_me_client import EncryptMeClient
+from sources.core.encryption import Encryption
+from sources.core.exceptions.invalid_email_exception import InvalidEmailException
 from sources.core.formatter import Formatter
 from sources.core.input_reader import InputReader
-from sources.core.server import Server
 
 
 def main():
@@ -51,53 +51,52 @@ def main():
                 print('Provide a message to encrypt with -m or --message option.')
                 exit(ExitCodes.NO_MESSAGE_TO_ENCRYPT)
             encrypt_data_with_custom_key(args.message[0])
+    except InvalidEmailException:
+        fail_with_invalid_email()
     except Exception as e:
-        print('Unknown error: ' + str(e) + '.')
-        exit(ExitCodes.UNKNOWN_ERROR)
+        fail_with_unknown_exception(e)
+
+
+def fail_with_invalid_email():
+    # TODO: use gettext and _() to provide localizations
+    print("Invalid e-mail address.")
+    exit(ExitCodes.INVALID_EMAIL)
+
+
+def fail_with_unknown_exception(exception):
+    # TODO: use gettext and _() to provide localizations
+    print("Unknown error: " + str(exception))
+    exit(ExitCodes.UNKNOWN_ERROR)
 
 
 def register_new_email(address):
-    email = Email(address)
-    if not email.is_valid():
-        # TODO: use gettext and _() to provide localizations
-        print("Invalid e-mail format.")
-        exit(ExitCodes.INVALID_EMAIL)
-
-    encryption = Encryption()
-
+    client = EncryptMeClient(address)
     # TODO: it should generate keys if they are not present
 
     print("Registration...")
-    if not Server.register(email.email, encryption.get_public_key_in_pem_format()):
+    if not client.register():
         print("Registration failed.")
         exit(ExitCodes.REGISTRATION_FAILED)
 
-    print('Provide a validation code:')
-    validation_code_encrypted = InputReader.read_encrypted_base64_text()
-    validation_code_bytes = encryption.decrypt(validation_code_encrypted)
-    validation_code = validation_code_bytes.decode(Formatter.DEFAULT_ENCODING)
-    if not Server.validate(email.email, validation_code):
+    print('Provide a validation message:')
+    if not client.validate_registration(InputReader.read_encrypted_base64_text()):
         print("Validation failed.")
         exit(ExitCodes.VALIDATION_FAILED)
 
     print("Registration successful.")
 
 
-def encrypt_data(public_key, message):
-    cryptography = Encryption()
-    encrypted_bytes = cryptography.encrypt_with_public_pem_key(public_key, message.encode(Formatter.DEFAULT_ENCODING))
-
-    print(Formatter.to_base64(encrypted_bytes))
-
-
 def encrypt_data_with_email(email, message):
-    public_key = Server.get_public_key(email)
-    encrypt_data(public_key, message)
+    client = EncryptMeClient(email)
+    encrypted_bytes = client.encrypt(message)
+    print(Formatter.to_base64(encrypted_bytes))
 
 
 def encrypt_data_with_custom_key(message):
     public_key = InputReader.read_public_key()
-    encrypt_data(public_key, message)
+    encrypted_bytes = Encryption().encrypt_with_public_pem_key(public_key,
+                                                               message.encode(Formatter.DEFAULT_ENCODING))
+    print(Formatter.to_base64(encrypted_bytes))
 
 
 def generate_new_keys():
