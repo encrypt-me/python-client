@@ -40,8 +40,8 @@ def main():
     try:
         options = Options()
 
-        is_password_required = args.register or args.decrypt
-        is_validation_required = is_password_required
+        is_password_required = args.register or args.decrypt or args.generate_keys
+        is_validation_required = args.register or args.decrypt
         is_message_required = args.encrypt or args.encrypt_with_custom_key
 
         if args.password and is_password_required:
@@ -66,7 +66,7 @@ def main():
             encrypted_data = client.encrypt(args.message[0])
             print_encrypted_data(encrypted_data)
         elif args.generate_keys:
-            client.generate_keys()
+            generate_keys(client)
         elif args.decrypt:
             decrypt_message(client)
         elif args.encrypt_with_custom_key:
@@ -139,6 +139,21 @@ def decrypt_message(client: EncryptMeClient):
     print("-----END DECRYPTED MESSAGE-----")
 
 
+def generate_keys(client: EncryptMeClient):
+    if client.options.password is None:
+        print("Would you like to use password to protect private key? (y/n)")
+        answer = input()
+        if answer == 'y':
+            client.options.password = ask_password()
+
+    if client.options.password is not None:
+        retype_password = getpass.getpass(prompt='Retype password: ')
+        if retype_password != client.options.password:
+            fail_with_passwords_do_not_match()
+
+    client.generate_keys()
+
+
 def validate_client(client: EncryptMeClient):
     try:
         client.validate_private_key()
@@ -146,18 +161,7 @@ def validate_client(client: EncryptMeClient):
         print("Private key not found. Would you like to generate new keys? (y/n)")
         answer = input()
         if answer == 'y':
-            if client.options.password is None:
-                print("Would you like to use password to protect private key? (y/n)")
-                answer = input()
-                if answer == 'y':
-                    client.options.password = ask_password()
-
-            if client.options.password is not None:
-                retype_password = getpass.getpass(prompt='Retype password: ')
-                if retype_password != client.options.password:
-                    fail_with_passwords_do_not_match()
-
-            client.generate_keys()
+            generate_keys(client)
         else:
             fail_with_no_keys_exception()
     except Exception as e:
