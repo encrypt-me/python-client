@@ -50,7 +50,6 @@ It will ask you to paste the encrypted message
 ## Public Key Registration 
 To register your public key, you can use the following command
 ```
-$ encrypt-me --generate-keys
 $ encrypt-me --register support@encrypt-me.org
 ```
 
