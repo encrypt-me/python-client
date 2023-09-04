@@ -139,7 +139,7 @@ def decrypt_message(client: EncryptMeClient):
     print("-----END DECRYPTED MESSAGE-----")
 
 
-def validate_client(client):
+def validate_client(client: EncryptMeClient):
     try:
         client.validate_private_key()
     except KeyNotExistException:
