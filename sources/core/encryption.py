@@ -2,7 +2,7 @@ import hashlib
 import os
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
@@ -92,6 +92,10 @@ class Encryption:
         return Encryption.encrypt_with_public_key(public_key, data)
 
     @classmethod
+    def encrypt_with_public_pem_key(cls, public_pem_key, data: bytes):
+        return Encryption.encrypt_with_public_key(cls.pem_to_public_key(public_pem_key), data)
+
+    @classmethod
     def encrypt_with_public_key(cls, public_key, data: bytes):
         encryption_key = ec.generate_private_key(ec.SECP521R1())
 
@@ -154,3 +158,24 @@ class Encryption:
 
     def validate_private_key(self):
         self.get_private_key()
+
+    def sign(self, encrypted_data):
+        private_key = self.get_private_key()
+        return private_key.sign(encrypted_data, ec.ECDSA(hashes.SHA256()))
+
+    @classmethod
+    def verify(cls, encrypted_data, signature, public_pem_key):
+        try:
+            cls.pem_to_public_key(public_pem_key).verify(signature, encrypted_data, ec.ECDSA(hashes.SHA256()))
+            return True
+        except Exception as e:
+            return False
+
+    @classmethod
+    def pem_to_public_key(cls, public_pem_key):
+        public_key_bytes = public_pem_key.encode(Formatter.DEFAULT_ENCODING)
+        public_key = serialization.load_pem_public_key(
+            public_key_bytes,
+            backend=default_backend()
+        )
+        return public_key
