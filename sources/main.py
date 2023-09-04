@@ -1,11 +1,13 @@
 import argparse
+import getpass
 
 from sources.constants.exit_codes import ExitCodes
 from sources.core.encrypt_me_client import EncryptMeClient
-from sources.core.encryption import Encryption
 from sources.core.exceptions.invalid_email_exception import InvalidEmailException
+from sources.core.exceptions.key_not_exist_exception import KeyNotExistException
 from sources.core.formatter import Formatter
 from sources.core.input_reader import InputReader
+from sources.core.options import Options
 
 
 def main():
@@ -17,6 +19,9 @@ def main():
                         help="Decrypts input message")
     parser.add_argument("-m", "--message", nargs=1, metavar="<message>",
                         help="Input message to encrypt")
+
+    parser.add_argument("-p", "--password", action='store_true',
+                        help="Use password to protect private key")
 
     parser.add_argument("-r", "--register", type=str, nargs=1, metavar="<e-mail>",
                         help="Register a new public key with a given email address")
@@ -33,26 +38,44 @@ def main():
     args = parser.parse_args()
 
     try:
-        if args.generate_random_public_key:
-            generate_random_public_key()
+        options = Options()
+
+        is_password_required = args.register or args.decrypt
+        is_validation_required = is_password_required
+        is_message_required = args.encrypt or args.encrypt_with_custom_key
+
+        if args.password and is_password_required:
+            options.password = ask_password()
+        if args.encrypt:
+            options.email = args.encrypt[0]
         if args.register:
-            register_new_email(args.register[0])
+            options.email = args.register[0]
+
+        client = EncryptMeClient(options)
+        if is_validation_required:
+            validate_client(client)
+
+        if is_message_required and not args.message:
+            fail_with_no_message_exception()
+
+        if args.generate_random_public_key:
+            print(client.generate_random_public_key())
+        if args.register:
+            register_new_email(client)
         elif args.encrypt:
-            if not args.message:
-                print('Provide a message to encrypt with -m or --message option.')
-                exit(ExitCodes.NO_MESSAGE_TO_ENCRYPT)
-            encrypt_data_with_email(args.encrypt[0], args.message[0])
+            encrypted_data = client.encrypt(args.message[0])
+            print_encrypted_data(encrypted_data)
         elif args.generate_keys:
-            generate_new_keys()
+            client.generate_keys()
         elif args.decrypt:
-            decrypt_message()
+            decrypt_message(client)
         elif args.encrypt_with_custom_key:
-            if not args.message:
-                print('Provide a message to encrypt with -m or --message option.')
-                exit(ExitCodes.NO_MESSAGE_TO_ENCRYPT)
-            encrypt_data_with_custom_key(args.message[0])
+            encrypted_data = client.encrypt_with_public_key(InputReader.read_public_key(), args.message[0])
+            print_encrypted_data(encrypted_data)
     except InvalidEmailException:
         fail_with_invalid_email()
+    except KeyNotExistException:
+        fail_with_no_keys_exception()
     except Exception as e:
         fail_with_unknown_exception(e)
 
@@ -63,16 +86,33 @@ def fail_with_invalid_email():
     exit(ExitCodes.INVALID_EMAIL)
 
 
+def fail_with_wrong_password(exception):
+    print("Invalid password. " + str(exception))
+    exit(ExitCodes.INVALID_PASSWORD)
+
+
 def fail_with_unknown_exception(exception):
     # TODO: use gettext and _() to provide localizations
     print("Unknown error: " + str(exception))
     exit(ExitCodes.UNKNOWN_ERROR)
 
 
-def register_new_email(address):
-    client = EncryptMeClient(address)
-    # TODO: it should generate keys if they are not present
+def fail_with_no_message_exception():
+    print('Provide a message to encrypt with -m or --message option.')
+    exit(ExitCodes.NO_MESSAGE_TO_ENCRYPT)
 
+
+def fail_with_passwords_do_not_match():
+    print("Passwords do not match.")
+    exit(ExitCodes.PASSWORDS_DO_NOT_MATCH)
+
+
+def fail_with_no_keys_exception():
+    print("Private key is not setup.")
+    exit(ExitCodes.NOT_KEYS)
+
+
+def register_new_email(client):
     print("Registration...")
     if not client.register():
         print("Registration failed.")
@@ -86,30 +126,11 @@ def register_new_email(address):
     print("Registration successful.")
 
 
-def encrypt_data_with_email(email, message):
-    client = EncryptMeClient(email)
-    encrypted_bytes = client.encrypt(message)
-    print(Formatter.to_base64(encrypted_bytes))
-
-
-def encrypt_data_with_custom_key(message):
-    public_key = InputReader.read_public_key()
-    encrypted_bytes = Encryption().encrypt_with_public_pem_key(public_key,
-                                                               message.encode(Formatter.DEFAULT_ENCODING))
-    print(Formatter.to_base64(encrypted_bytes))
-
-
-def generate_new_keys():
-    cryptography = Encryption()
-    cryptography.generate_keys()
-    print("Keys generated.")
-
-
-def decrypt_message():
+def decrypt_message(client: EncryptMeClient):
     print("Enter encrypted data:")
 
     encrypted_bytes = InputReader.read_encrypted_base64_text()
-    message_bytes = Encryption().decrypt(encrypted_bytes)
+    message_bytes = client.decrypt(encrypted_bytes)
     message = message_bytes.decode(Formatter.DEFAULT_ENCODING)
 
     print("\n")
@@ -118,6 +139,38 @@ def decrypt_message():
     print("-----END DECRYPTED MESSAGE-----")
 
 
-def generate_random_public_key():
-    cryptography = Encryption()
-    print(cryptography.generate_random_public_key_pem())
+def validate_client(client):
+    try:
+        client.validate_private_key()
+    except KeyNotExistException:
+        print("Private key not found. Would you like to generate new keys? (y/n)")
+        answer = input()
+        if answer == 'y':
+            if client.options.password is None:
+                print("Would you like to use password to protect private key? (y/n)")
+                answer = input()
+                if answer == 'y':
+                    client.options.password = ask_password()
+
+            if client.options.password is not None:
+                retype_password = getpass.getpass(prompt='Retype password: ')
+                if retype_password != client.options.password:
+                    fail_with_passwords_do_not_match()
+
+            client.generate_keys()
+        else:
+            fail_with_no_keys_exception()
+    except Exception as e:
+        if client.options.password is None:
+            client.options.password = ask_password()
+            validate_client(client)
+        else:
+            fail_with_wrong_password(e)
+
+
+def print_encrypted_data(encrypted_bytes):
+    print(Formatter.to_base64(encrypted_bytes))
+
+
+def ask_password():
+    return getpass.getpass(prompt='Enter password: ')

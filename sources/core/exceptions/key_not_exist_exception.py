@@ -1,0 +1,3 @@
+class KeyNotExistException(Exception):
+    pass
+

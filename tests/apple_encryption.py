@@ -5,6 +5,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import ec
 
 sys.path.append("..")
+from sources.core.options import Options
 from sources.core.encryption import Encryption
 
 
@@ -37,7 +38,7 @@ class AppleEncryptionTestCase(unittest.TestCase):
         public_key = public_numbers.public_key(default_backend())
         private_key = private_numbers.private_key(default_backend())
 
-        encryption = Encryption()
+        encryption = Encryption(Options())
 
         # test keys
         test_data = b'Hello World!'

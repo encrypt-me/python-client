@@ -2,12 +2,13 @@ import hashlib
 import os
 
 from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ec
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
+from sources.core.exceptions.key_not_exist_exception import KeyNotExistException
 from sources.core.formatter import Formatter
+from sources.core.options import Options
 from sources.core.storage.storage import Storage
 from sources.core.storage.storage_factory import StorageFactory
 
@@ -17,26 +18,30 @@ class Encryption:
     AES_SIZE = 32
     IV_SIZE = 16
     storage: Storage
+    options: Options
 
-    def __init__(self):
+    def __init__(self, options: Options):
         self.storage = StorageFactory.create()
-
-    def setup_if_needed(self):
-        self.generate_keys()
+        self.options = options
 
     def get_private_key(self):
         private_key_path = self.storage.get_private_key_path()
         if not os.path.exists(private_key_path):
-            raise ValueError("Key is not set.")
+            raise KeyNotExistException()
 
         with open(private_key_path, 'rb') as file:
             return serialization.load_pem_private_key(
                 file.read(),
-                password=None,
+                password=self.options.get_password_bytes(),
             )
 
     def get_public_key(self):
         return self.get_private_key().public_key()
+
+    def get_serialization_algorithm(self):
+        if self.options.password is None:
+            return serialization.NoEncryption()
+        return serialization.BestAvailableEncryption(self.options.get_password_bytes())
 
     def generate_keys(self):
         private_key = ec.generate_private_key(ec.SECP521R1(), default_backend())
@@ -47,7 +52,7 @@ class Encryption:
         private_key_bytes = private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PrivateFormat.PKCS8,
-            encryption_algorithm=serialization.NoEncryption()
+            encryption_algorithm=self.get_serialization_algorithm()
         )
 
         if not os.path.exists(keys_path):
@@ -146,3 +151,6 @@ class Encryption:
     def generate_random_public_key_pem(cls):
         private_key = ec.generate_private_key(ec.SECP521R1(), default_backend())
         return cls.internal_get_public_key_in_pem_format(private_key.public_key())
+
+    def validate_private_key(self):
+        self.get_private_key()
