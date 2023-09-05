@@ -1,8 +1,15 @@
 # Encrypt Me Client
 
 ## Installation
+Required packages
+```
+$ pip install cryptography
+$ pip install requests
+$ pip install protobuf
+```
 
 ### MacOS
+
 You can use bash script from this repo
 ```
 $ git clone https://github.com/encrypt-me/python-client.git
