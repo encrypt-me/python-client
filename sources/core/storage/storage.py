@@ -2,7 +2,7 @@ import os
 
 
 class Storage:
-    base_folder: str
+    base_folder = ''
 
     def get_keys_path(self):
         return os.path.join(self.base_folder, 'keys')
