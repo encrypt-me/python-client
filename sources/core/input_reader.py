@@ -11,7 +11,10 @@ class InputReader:
         while True:
             line = input()
 
-            if line == Formatter.HEADER:
+            if line[:39] == Formatter.HEADER:
+                if len(line) > 39:
+                    message += line[39:]
+
                 if can_read:
                     break
                 else:
