@@ -9,7 +9,29 @@ class InputReader:
         message = ''
         can_read = False
         while True:
-            line = input()
+            line = input().strip()
+
+            if line.count(Formatter.HEADER) == 2:
+                while line[:len(Formatter.HEADER)] != Formatter.HEADER:
+                    line = line[1:]
+                while line[-len(Formatter.HEADER):] != Formatter.HEADER:
+                    line = line[:-1]
+                message += line[len(Formatter.HEADER):-len(Formatter.HEADER)]
+                return base64.b64decode(message)
+            else:
+                if (Formatter.HEADER in line and can_read is False or len(line) > len(Formatter.HEADER) and
+                        Formatter.HEADER in line and can_read is False):
+                    while line[:len(Formatter.HEADER)] != Formatter.HEADER:
+                        line = line[1:]
+                    message += line[len(Formatter.HEADER):]
+                    line = line[:len(Formatter.HEADER)]
+                else:
+                    if (Formatter.HEADER in line and line[-len(Formatter.HEADER):] != Formatter.HEADER or len(line) >
+                            len(Formatter.HEADER) and Formatter.HEADER in line):
+                        while line[-len(Formatter.HEADER):] != Formatter.HEADER:
+                            line = line[:-1]
+                        message += line[:-len(Formatter.HEADER)]
+                        line = line[-len(Formatter.HEADER):]
 
             if line[:39] == Formatter.HEADER:
                 if len(line) > 39 and line[-39:] == Formatter.HEADER:
