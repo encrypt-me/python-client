@@ -14,4 +14,6 @@ class Options:
         self.configuration.load_configuration()
 
     def get_password_bytes(self):
+        if self.password is None:
+            return None
         return bytes(self.password, Formatter.DEFAULT_ENCODING)
