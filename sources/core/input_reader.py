@@ -8,39 +8,25 @@ class InputReader:
     def read_encrypted_base64_text():
         message = ''
         can_read = False
+        len_header = len(Formatter.HEADER)
         while True:
             line = input().strip()
 
             if line.count(Formatter.HEADER) == 2:
-                while line[:len(Formatter.HEADER)] != Formatter.HEADER:
-                    line = line[1:]
-                while line[-len(Formatter.HEADER):] != Formatter.HEADER:
-                    line = line[:-1]
-                message += line[len(Formatter.HEADER):-len(Formatter.HEADER)]
+                line = line[line.index(Formatter.HEADER) + len_header:]
+                line = line[:line.index(Formatter.HEADER)]
+                message += line
                 return base64.b64decode(message)
             else:
-                if (Formatter.HEADER in line and can_read is False or len(line) > len(Formatter.HEADER) and
-                        Formatter.HEADER in line and can_read is False):
-                    while line[:len(Formatter.HEADER)] != Formatter.HEADER:
-                        line = line[1:]
-                    message += line[len(Formatter.HEADER):]
-                    line = line[:len(Formatter.HEADER)]
-                else:
-                    if (Formatter.HEADER in line and line[-len(Formatter.HEADER):] != Formatter.HEADER or len(line) >
-                            len(Formatter.HEADER) and Formatter.HEADER in line):
-                        while line[-len(Formatter.HEADER):] != Formatter.HEADER:
-                            line = line[:-1]
-                        message += line[:-len(Formatter.HEADER)]
-                        line = line[-len(Formatter.HEADER):]
+                if Formatter.HEADER in line:
+                    if not can_read:
+                        message += line[line.index(Formatter.HEADER) + len_header:]
+                        line = Formatter.HEADER
+                    else:
+                        message += line[:line.index(Formatter.HEADER)]
+                        line = Formatter.HEADER
 
-            if line[:39] == Formatter.HEADER:
-                if len(line) > 39 and line[-39:] == Formatter.HEADER:
-                    message += line[39:-39]
-                    line = Formatter.HEADER
-                    can_read = True
-                else:
-                    message += line[39:]
-
+            if line == Formatter.HEADER:
                 if can_read:
                     break
                 else:
