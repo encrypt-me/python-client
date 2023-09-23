@@ -12,19 +12,18 @@ class InputReader:
         while True:
             line = input().strip()
 
-            if line.count(Formatter.HEADER) == 2:
-                line = line[line.index(Formatter.HEADER) + len_header:]
-                line = line[:line.index(Formatter.HEADER)]
-                message += line
-                return base64.b64decode(message)
-            else:
-                if Formatter.HEADER in line:
-                    if not can_read:
-                        message += line[line.index(Formatter.HEADER) + len_header:]
-                        line = Formatter.HEADER
-                    else:
+            if Formatter.HEADER in line:
+                if not can_read:
+                    line = line[line.index(Formatter.HEADER) + len_header:]
+                    if Formatter.HEADER in line:
                         message += line[:line.index(Formatter.HEADER)]
-                        line = Formatter.HEADER
+                        return base64.b64decode(message)
+                    else:
+                        message += line
+                    line = Formatter.HEADER
+                else:
+                    message += line[:line.index(Formatter.HEADER)]
+                    line = Formatter.HEADER
 
             if line == Formatter.HEADER:
                 if can_read:
