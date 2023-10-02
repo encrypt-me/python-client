@@ -8,20 +8,25 @@ class InputReader:
     def read_encrypted_base64_text():
         message = ''
         can_read = False
+        len_header = len(Formatter.HEADER)
         while True:
             line = input()
 
-            if line == Formatter.HEADER:
-                if can_read:
-                    break
-                else:
+            if Formatter.HEADER in line:
+                header_index = line.index(Formatter.HEADER)
+                if not can_read:
+                    line = line[header_index + len_header:]
+                    if Formatter.HEADER in line:
+                        message += line[:line.index(Formatter.HEADER)]
+                        return base64.b64decode(message)
+                    else:
+                        message += line
                     can_read = True
-                    continue
-
-            if can_read:
+                else:
+                    message += line[:header_index]
+                    return base64.b64decode(message.strip())
+            else:
                 message += line
-
-        return base64.b64decode(message)
 
     @staticmethod
     def read_public_key():
